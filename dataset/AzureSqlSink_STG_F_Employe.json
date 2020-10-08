@@ -1,0 +1,45 @@
+{
+	"name": "AzureSqlSink_STG_F_Employe",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SinkAzureSQL",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "AzureSqlSinkSTG"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "DateMois",
+				"type": "varchar"
+			},
+			{
+				"name": "Matricule",
+				"type": "varchar"
+			},
+			{
+				"name": "Salaire_ReelMensuel",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 6
+			},
+			{
+				"name": "Nbre_HeuresWReelMensuel",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 6
+			},
+			{
+				"name": "YEAR_MONTH",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "STG_F_Employe"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,43 @@
+{
+	"name": "ArchivesFiles",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FileArchives": {
+				"type": "string",
+				"defaultValue": "D_EXT_RefEmploye_2016_09.csv"
+			},
+			"RepDate": {
+				"type": "string",
+				"defaultValue": "06102020"
+			}
+		},
+		"folder": {
+			"name": "Blob Storage"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().FileArchives",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().RepDate",
+					"type": "Expression"
+				},
+				"container": "archivesfiles"
+			},
+			"columnDelimiter": ";",
+			"escapeChar": "",
+			"quoteChar": ""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

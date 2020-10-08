@@ -1,0 +1,47 @@
+{
+	"name": "AzureSql_D_TypeContrat",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SinkAzureSQL",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "AzureSqlSinkDM"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ID_TypeContrat",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Code_Contrat",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Lib_Contrat_FR",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Ordre_Contrat",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Code_RegroupContrat",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Lib_RegroupContrat_FR",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dm",
+			"table": "D_TypeContrat"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

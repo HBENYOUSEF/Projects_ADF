@@ -1,0 +1,35 @@
+{
+	"name": "SrcFilesOnPremDynamique",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "FileServerOnPrem",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FilesName": {
+				"type": "string",
+				"defaultValue": "D_EXT_RefEmploye_2016_09.csv"
+			}
+		},
+		"folder": {
+			"name": "Files On Prem"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "FileServerLocation",
+				"fileName": {
+					"value": "@dataset().FilesName",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ";",
+			"escapeChar": "\\",
+			"firstRowAsHeader": false,
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,41 @@
+{
+	"name": "AzureSqlSink_STG_EXT_RefEmploye",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SinkAzureSQL",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "AzureSqlSinkSTG"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "Matricule",
+				"type": "varchar"
+			},
+			{
+				"name": "Date_DebutContrat",
+				"type": "varchar"
+			},
+			{
+				"name": "Date_FinContrat",
+				"type": "varchar"
+			},
+			{
+				"name": "Nbre_HeuresWTh_Jour",
+				"type": "varchar"
+			},
+			{
+				"name": "YEAR_MONTH",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "STG_EXT_RefEmploye"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

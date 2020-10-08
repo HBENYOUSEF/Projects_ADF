@@ -1,0 +1,64 @@
+{
+	"name": "AzureSqlD_RefEmploye",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SinkAzureSQL",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "AzureSqlSinkDM"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "Matricule",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Date_Naissance",
+				"type": "date"
+			},
+			{
+				"name": "ID_Metier",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ID_Etablissement",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ID_TypeContrat",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Date_DebutContrat",
+				"type": "date"
+			},
+			{
+				"name": "Date_FinContrat",
+				"type": "date"
+			},
+			{
+				"name": "Salaire_Annuel_th",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 6
+			},
+			{
+				"name": "Nbre_HeuresWTh_Jour",
+				"type": "decimal",
+				"precision": 6,
+				"scale": 2
+			}
+		],
+		"typeProperties": {
+			"schema": "dm",
+			"table": "D_RefEmploye"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

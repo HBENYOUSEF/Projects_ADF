@@ -1,0 +1,88 @@
+{
+	"name": "dataflow_Fact_Employe",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlSink_STG_F_Employe",
+						"type": "DatasetReference"
+					},
+					"name": "SrcFactEmploye"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSqlD_RefEmploye",
+						"type": "DatasetReference"
+					},
+					"name": "SrcDimEmploye"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSql_F_Employe",
+						"type": "DatasetReference"
+					},
+					"name": "SRCFactMAXKEY"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSql_F_Employe",
+						"type": "DatasetReference"
+					},
+					"name": "SrcFactEmployeVerifExist"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlD_RefEmploye",
+						"type": "DatasetReference"
+					},
+					"name": "sinkDimEmploye"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSql_F_Employe",
+						"type": "DatasetReference"
+					},
+					"name": "SinkFactEmploye"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSql_Err_F_Employe",
+						"type": "DatasetReference"
+					},
+					"name": "sinkErrFEmploye"
+				}
+			],
+			"transformations": [
+				{
+					"name": "Select"
+				},
+				{
+					"name": "ExistsVerifMatriculeDimEmploye"
+				},
+				{
+					"name": "DerivedColumn"
+				},
+				{
+					"name": "SurrogateKey"
+				},
+				{
+					"name": "JoinWithMaxIdFromFact"
+				},
+				{
+					"name": "ExistsDataFact"
+				},
+				{
+					"name": "ConditionalSplit1"
+				},
+				{
+					"name": "DerivedColumnErrFact"
+				}
+			],
+			"script": "parameters{\n\tYear_Month as string (\"2016_09\")\n}\nsource(output(\n\t\tDateMois as string,\n\t\tMatricule as string,\n\t\tSalaire_ReelMensuel as decimal(18,6),\n\t\tNbre_HeuresWReelMensuel as decimal(18,6),\n\t\tYEAR_MONTH as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: (\"SELECT DateMois,Matricule,Salaire_ReelMensuel,Nbre_HeuresWReelMensuel,YEAR_MONTH FROM dbo.STG_F_Employe WHERE YEAR_MONTH = '{$Year_Month}'\"),\n\tformat: 'query') ~> SrcFactEmploye\nsource(output(\n\t\tMatricule as string,\n\t\tDate_Naissance as date,\n\t\tID_Metier as integer,\n\t\tID_Etablissement as integer,\n\t\tID_TypeContrat as integer,\n\t\tDate_DebutContrat as date,\n\t\tDate_FinContrat as date,\n\t\tSalaire_Annuel_th as decimal(18,6),\n\t\tNbre_HeuresWTh_Jour as decimal(6,2)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> SrcDimEmploye\nsource(output(\n\t\tMAX_ID as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: 'SELECT MAX(ID) AS MAX_ID FROM [dm].[F_Employe_Salaire_HeureW]',\n\tformat: 'query') ~> SRCFactMAXKEY\nsource(output(\n\t\tDate as date,\n\t\tMatricule as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: (\"SELECT  [Date],[Matricule] FROM [dm].[F_Employe_Salaire_HeureW] WHERE YEAR(Date) = '{substring($Year_Month,1,4)}' AND Month(Date) = '{substring($Year_Month,6,2)}'\"),\n\tformat: 'query') ~> SrcFactEmployeVerifExist\nSrcFactEmploye select(mapColumn(\n\t\tMatricule\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Select\nSelect, SrcDimEmploye exists(Select@Matricule == SrcDimEmploye@Matricule,\n\tnegate:true,\n\tbroadcast: 'auto')~> ExistsVerifMatriculeDimEmploye\nSurrogateKey derive(DateMoisDC = toDate(substring(DateMois,1,4) + '-' + substring(DateMois,6,2) + '-' + substring(DateMois,10,2)),\n\t\tID = ID+MAX_ID) ~> DerivedColumn\nJoinWithMaxIdFromFact keyGenerate(output(ID as long),\n\tstartAt: 1L) ~> SurrogateKey\nConditionalSplit1@Good, SRCFactMAXKEY join(1==1,\n\tjoinType:'cross',\n\tbroadcast: 'auto')~> JoinWithMaxIdFromFact\nDerivedColumn, SrcFactEmployeVerifExist exists(ConditionalSplit1@Good@Matricule == SrcFactEmployeVerifExist@Matricule\n\t&& DateMoisDC == Date,\n\tnegate:true,\n\tbroadcast: 'auto')~> ExistsDataFact\nSrcFactEmploye split(isNull(toDate(substring(DateMois,1,4) + '-' + substring(DateMois,6,2) + '-' + substring(DateMois,10,2))),\n\tdisjoint: false) ~> ConditionalSplit1@(ErreurDate, Good)\nConditionalSplit1@ErreurDate derive(DateImportation = currentTimestamp()) ~> DerivedColumnErrFact\nExistsVerifMatriculeDimEmploye sink(input(\n\t\tMatricule as string,\n\t\tDate_Naissance as date,\n\t\tID_Metier as integer,\n\t\tID_Etablissement as integer,\n\t\tID_TypeContrat as integer,\n\t\tDate_DebutContrat as date,\n\t\tDate_FinContrat as date,\n\t\tSalaire_Annuel_th as decimal(18,6),\n\t\tNbre_HeuresWTh_Jour as decimal(6,2)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> sinkDimEmploye\nExistsDataFact sink(input(\n\t\tID as integer,\n\t\tDate as date,\n\t\tMatricule as string,\n\t\tSalaire_ReelMensuel as decimal(18,6),\n\t\tNbre_HeuresWReelMensuel as decimal(18,6)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tmapColumn(\n\t\tID,\n\t\tDate = DateMoisDC,\n\t\tMatricule,\n\t\tSalaire_ReelMensuel,\n\t\tNbre_HeuresWReelMensuel\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SinkFactEmploye\nDerivedColumnErrFact sink(input(\n\t\tDate as string,\n\t\tMatricule as string,\n\t\tSalaire_ReelMensuel as decimal(18,6),\n\t\tNbre_HeuresWReelMensuel as decimal(18,6),\n\t\tDate_Imporation as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tmapColumn(\n\t\tDate = DateMois,\n\t\tMatricule,\n\t\tSalaire_ReelMensuel,\n\t\tNbre_HeuresWReelMensuel,\n\t\tDate_Imporation = DateImportation\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> sinkErrFEmploye"
+		}
+	}
+}

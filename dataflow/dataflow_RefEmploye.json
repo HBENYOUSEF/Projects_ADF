@@ -1,0 +1,58 @@
+{
+	"name": "dataflow_RefEmploye",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlSTG",
+						"type": "DatasetReference"
+					},
+					"name": "SrcExtREFEmploye"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSqlSTG",
+						"type": "DatasetReference"
+					},
+					"name": "SrcRefEmploye"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSql_D_TypeContrat",
+						"type": "DatasetReference"
+					},
+					"name": "SrcDTypeContrat"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlD_RefEmploye",
+						"type": "DatasetReference"
+					},
+					"name": "SinkDimEmploye"
+				}
+			],
+			"transformations": [
+				{
+					"name": "JoinRefEmplExtEmpl"
+				},
+				{
+					"name": "LookupTypeContrat"
+				},
+				{
+					"name": "SDC"
+				},
+				{
+					"name": "Select"
+				},
+				{
+					"name": "DerivedColumn"
+				}
+			],
+			"script": "parameters{\n\tYear_Month as string\n}\nsource(output(\n\t\tMatricule as string,\n\t\tDate_DebutContrat as string,\n\t\tDate_FinContrat as string,\n\t\tNbre_HeuresWTh_Jour as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: (\"SELECT  Matricule, Date_DebutContrat,Date_FinContrat,Nbre_HeuresWTh_Jour FROM dbo.STG_EXT_RefEmploye WHERE YEAR_MONTH = '{$Year_Month}'\"),\n\tformat: 'query') ~> SrcExtREFEmploye\nsource(output(\n\t\tMatricule as string,\n\t\tDate_Naissance as string,\n\t\tID_Metier as integer,\n\t\tID_Etablissement as integer,\n\t\tID_TypeContrat as string,\n\t\tSalaire_Annuel_th as decimal(18,6)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: (\"SELECT Matricule, Date_Naissance, ID_Metier, ID_Etablissement, ID_TypeContrat, Salaire_Annuel_th FROM dbo.STG_RefEmploye WHERE YEAR_MONTH ='{$Year_Month}'\"),\n\tformat: 'query') ~> SrcRefEmploye\nsource(output(\n\t\tID_TypeContrat as integer,\n\t\tCode_Contrat as string,\n\t\tLib_Contrat_FR as string,\n\t\tOrdre_Contrat as integer,\n\t\tCode_RegroupContrat as string,\n\t\tLib_RegroupContrat_FR as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> SrcDTypeContrat\nSrcExtREFEmploye, SrcRefEmploye join(SrcExtREFEmploye@Matricule == SrcRefEmploye@Matricule,\n\tjoinType:'inner',\n\tbroadcast: 'auto')~> JoinRefEmplExtEmpl\nJoinRefEmplExtEmpl, SrcDTypeContrat lookup(SrcRefEmploye@ID_TypeContrat == Code_Contrat,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupTypeContrat\nDerivedColumn alterRow(upsertIf(true())) ~> SDC\nLookupTypeContrat select(mapColumn(\n\t\tMatricule = {SrcExtREFEmploye@Matricule},\n\t\tDate_DebutContrat,\n\t\tDate_FinContrat,\n\t\tNbre_HeuresWTh_Jour,\n\t\tDate_Naissance,\n\t\tID_Metier,\n\t\tID_Etablissement,\n\t\tSalaire_Annuel_th,\n\t\tID_TypeContrat = {SrcDTypeContrat@ID_TypeContrat}\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Select\nSelect derive(Date_Naissance = toDate(substring(Date_Naissance,7,4) + '-' + substring(Date_Naissance,4,2) + '-' + substring(Date_Naissance,1,2)),\n\t\tDate_DebutContrat = toDate(substring(Date_DebutContrat,7,4) + '-' + substring(Date_DebutContrat,4,2) + '-' + substring(Date_DebutContrat,1,2)),\n\t\tDate_FinContrat = toDate(substring(Date_FinContrat,7,4) + '-' + substring(Date_FinContrat,4,2) + '-' + substring(Date_FinContrat,1,2)),\n\t\tNbre_HeuresWTh_Jour = toInteger(Nbre_HeuresWTh_Jour)) ~> DerivedColumn\nSDC sink(input(\n\t\tMatricule as string,\n\t\tDate_Naissance as date,\n\t\tID_Metier as integer,\n\t\tID_Etablissement as integer,\n\t\tID_TypeContrat as integer,\n\t\tDate_DebutContrat as date,\n\t\tDate_FinContrat as date,\n\t\tSalaire_Annuel_th as decimal(18,6),\n\t\tNbre_HeuresWTh_Jour as decimal(6,2)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['Matricule'],\n\tformat: 'table',\n\tmapColumn(\n\t\tMatricule,\n\t\tDate_Naissance,\n\t\tID_Metier,\n\t\tID_Etablissement,\n\t\tID_TypeContrat,\n\t\tDate_DebutContrat,\n\t\tDate_FinContrat,\n\t\tSalaire_Annuel_th,\n\t\tNbre_HeuresWTh_Jour\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SinkDimEmploye"
+		}
+	}
+}

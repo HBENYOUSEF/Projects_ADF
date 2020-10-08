@@ -1,0 +1,46 @@
+{
+	"name": "AzureSql_F_Employe",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SinkAzureSQL",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "AzureSqlSinkDM"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Date",
+				"type": "date"
+			},
+			{
+				"name": "Matricule",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Salaire_ReelMensuel",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 6
+			},
+			{
+				"name": "Nbre_HeuresWReelMensuel",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 6
+			}
+		],
+		"typeProperties": {
+			"schema": "dm",
+			"table": "F_Employe_Salaire_HeureW"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

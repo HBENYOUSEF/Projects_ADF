@@ -1,0 +1,24 @@
+{
+	"name": "SrcFilesOnPrem",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "FileServerOnPrem",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Files On Prem"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "FileServerLocation"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
