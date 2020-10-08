@@ -19,8 +19,11 @@
 				"startTime": "2020-10-08T00:11:00.000Z",
 				"timeZone": "UTC",
 				"schedule": {
+					"minutes": [
+						14
+					],
 					"hours": [
-						2
+						12
 					]
 				}
 			}
