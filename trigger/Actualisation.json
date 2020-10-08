@@ -1,0 +1,29 @@
+{
+	"name": "Actualisation",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "Projet_RH",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2020-10-08T10:08:00.000Z",
+				"timeZone": "UTC",
+				"schedule": {
+					"hours": [
+						2
+					]
+				}
+			}
+		}
+	}
+}
